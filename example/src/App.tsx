@@ -55,13 +55,22 @@ export default function App() {
 
     (async () => {
       console.log('test put pouch');
-      await pouchdb.put({
-        _id: Math.random().toString(),
-        hello: 2,
+      const randId = Math.random().toString();
+      await pouchdb.post({
+        hello: Math.random(),
         world: 3
       })
-      const allDocs = await pouchdb.find();
+      console.log('did post; rechecking')
+      const allDocs = await pouchdb.find({
+        selector: {
+          // hello: { $lt: 1 }
+          // hello: { $gt: 1 }
+          // _id: 'shit'
+          // role: { $elemMatch: { $eq: role } },
+        },
+      });
       console.log('allPouchDocs are', allDocs);
+      console.log('shit it', await pouchdb.get('shit'));
     })();
 
   }, []);

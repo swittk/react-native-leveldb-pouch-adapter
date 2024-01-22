@@ -53,6 +53,26 @@ import {
   createError
 } from 'pouchdb-errors';
 
+import { EntryStream } from 'level-read-stream'
+
+if (!(global).process) {
+  (global).process = {};
+}
+
+// Shim for react native
+if (!global.process.nextTick) {
+  global.process.nextTick = (callback, ...params) => {
+    if (!params.length) {
+      setImmediate(callback);
+    }
+    else {
+      setImmediate(() => {
+        callback(...params);
+      });
+    }
+  }
+}
+
 var DOC_STORE = 'document-store';
 var BY_SEQ_STORE = 'by-sequence';
 var ATTACHMENT_STORE = 'attach-store';
@@ -100,7 +120,7 @@ function fetchAttachment(att, stores, opts) {
       var data;
       if (err) {
         /* istanbul ignore if */
-        if (err.name !== 'NotFoundError') {
+        if (err.code !== 'LEVEL_NOT_FOUND') {
           return reject(err);
         } else {
           // empty
@@ -230,7 +250,7 @@ function LevelPouch(opts, callback) {
 
   function countDocs(callback) {
     /* istanbul ignore if */
-    if (db.isClosed()) {
+    if (db.status == 'closed') {
       return callback(new Error('database is closed'));
     }
     return callback(null, db._docCount); // use cached value
@@ -422,7 +442,7 @@ function LevelPouch(opts, callback) {
     stores.binaryStore.get(digest, function (err, attach) {
       if (err) {
         /* istanbul ignore if */
-        if (err.name !== 'NotFoundError') {
+        if (err.code != 'LEVEL_NOT_FOUND') {
           return callback(err);
         }
         // Empty attachment
@@ -532,7 +552,7 @@ function LevelPouch(opts, callback) {
         txn.get(stores.docStore, doc._id, function (err, info) {
           if (err) {
             /* istanbul ignore if */
-            if (err.name !== 'NotFoundError') {
+            if (err.code != 'LEVEL_NOT_FOUND') {
               overallErr = err;
             }
           } else {
@@ -713,7 +733,7 @@ function LevelPouch(opts, callback) {
         return new Promise(function (resolve, reject) {
           txn.get(stores.attachmentStore, digest, function (err, oldAtt) {
             /* istanbul ignore if */
-            if (err && err.name !== 'NotFoundError') {
+            if (err && err.code != 'LEVEL_NOT_FOUND') {
               return reject(err);
             }
             resolve(oldAtt);
@@ -895,7 +915,9 @@ function LevelPouch(opts, callback) {
           return callback(null, returnVal);
         }
         var results = [];
-        var docstream = stores.docStore.readStream(readstreamOpts);
+
+        // No more built in streams; use new API
+        var docstream = new EntryStream(stores.docStore, readstreamOpts);
 
         var throughStream = through(function (entry, _, next) {
           var metadata = entry.value;
@@ -1046,7 +1068,8 @@ function LevelPouch(opts, callback) {
         }
       }
     }
-    var changeStream = stores.bySeqStore.readStream(streamOpts);
+    // Abstract-Level no longer has built in read streams
+    var changeStream = new EntryStream(stores.bySeqStore, streamOpts);
     var throughStream = through(function (data, _, next) {
       if (limit && called >= limit) {
         complete();
@@ -1130,7 +1153,7 @@ function LevelPouch(opts, callback) {
       // metadata not cached, have to go fetch it
       stores.docStore.get(doc._id, function (err, metadata) {
         /* istanbul ignore if */
-        if (opts.cancelled || opts.done || db.isClosed() ||
+        if (opts.cancelled || opts.done || db.status == 'closed' ||
           isLocalId(metadata.id)) {
           return next();
         }
@@ -1164,7 +1187,7 @@ function LevelPouch(opts, callback) {
 
   api._close = function (callback) {
     /* istanbul ignore if */
-    if (db.isClosed()) {
+    if (db.status == 'closed') {
       return callback(createError(NOT_OPEN));
     }
     db.close(function (err) {
@@ -1296,7 +1319,7 @@ function LevelPouch(opts, callback) {
           txn.get(stores.attachmentStore, digest, function (err, attData) {
             /* istanbul ignore if */
             if (err) {
-              if (err.name === 'NotFoundError') {
+              if (err.code === 'LEVEL_NOT_FOUND') {
                 return checkDone();
               } else {
                 return checkDone(err);
@@ -1341,7 +1364,7 @@ function LevelPouch(opts, callback) {
         txn.get(stores.bySeqStore, formatSeq(seq), function (err, doc) {
           /* istanbul ignore if */
           if (err) {
-            if (err.name === 'NotFoundError') {
+            if (err.code === 'LEVEL_NOT_FOUND') {
               return checkDone();
             } else {
               return checkDone(err);
@@ -1449,7 +1472,7 @@ function LevelPouch(opts, callback) {
     txn.get(stores.localStore, doc._id, function (err, resp) {
       if (err) {
         /* istanbul ignore if */
-        if (err.name !== 'NotFoundError') {
+        if (err.code != 'LEVEL_NOT_FOUND') {
           return callback(err);
         } else {
           return callback(createError(MISSING_DOC));
