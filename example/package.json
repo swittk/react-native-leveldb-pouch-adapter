@@ -1,6 +1,6 @@
 {
-  "name": "react-native-leveldb-pouch-adapter-example",
-  "description": "Example app for react-native-leveldb-pouch-adapter",
+  "name": "pouchdb-adapter-react-native-leveldb-example",
+  "description": "Example app for pouchdb-adapter-react-native-leveldb",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -9,8 +9,19 @@
     "start": "react-native start"
   },
   "dependencies": {
-    "react": "16.13.1",
-    "react-native": "0.63.4"
+    "@switt/react-native-leveldb": "^3.0.6-alpha1",
+    "@types/react": "17.0.2",
+    "@types/react-native": "0.68.2",
+    "fast-text-encoding": "^1.0.4",
+    "pouchdb-adapter-http": "^7.3.0",
+    "pouchdb-core": "^7.3.0",
+    "pouchdb-find": "^7.3.0",
+    "pouchdb-mapreduce": "^7.3.0",
+    "pouchdb-replication": "^7.3.0",
+    "react": "17.0.2",
+    "react-native": "0.68.2",
+    "react-native-fs": "^2.20.0",
+    "react-native-get-random-values": "^1.8.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
