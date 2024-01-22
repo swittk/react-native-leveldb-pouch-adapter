@@ -84,6 +84,7 @@
     "events": "^3.3.0",
     "level-read-stream": "^1.1.0",
     "pouchdb": "^7.3.0",
+    "pouchdb-core": "^7.3.0",
     "pouchdb-adapter-leveldb": "^7.3.0",
     "pouchdb-adapter-leveldb-core": "^7.3.0",
     "pouchdb-adapter-utils": "^7.3.0",

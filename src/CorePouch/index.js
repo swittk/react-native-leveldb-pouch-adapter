@@ -1,15 +1,13 @@
-import sublevel from 'sublevel-pouchdb';
 import { obj as through } from 'through2';
-import getArguments from 'argsarray';
 import Deque from 'double-ended-queue';
-import bufferFrom from 'buffer-from'; // ponyfill for Node <6
+import PouchDB from 'pouchdb-core';
 import {
   clone,
   changesHandler as Changes,
   filterChange,
   functionName,
   uuid,
-  // nextTick
+  nextTick
 } from 'pouchdb-utils';
 import {
   allDocsKeysQuery,
@@ -44,6 +42,7 @@ import prepareAttachmentForStorage from './prepareAttachmentForStorage';
 import createEmptyBluffer from './createEmptyBlobOrBuffer';
 
 import LevelTransaction from './transaction';
+import { SKReactNativeLevel } from 'react-native-leveldb-level-adapter';
 
 import {
   MISSING_DOC,
@@ -53,11 +52,6 @@ import {
   MISSING_STUB,
   createError
 } from 'pouchdb-errors';
-import { EntryStream } from 'level-read-stream';
-import { SKReactNativeLevel } from 'react-native-leveldb-level-adapter';
-// console.log('thingy is', thingy);
-// For react native
-const nextTick = setImmediate;
 
 var DOC_STORE = 'document-store';
 var BY_SEQ_STORE = 'by-sequence';
@@ -153,97 +147,59 @@ function fetchAttachments(results, stores, opts) {
 
 function LevelPouch(opts, callback) {
   opts = clone(opts);
+  console.log('levelpouch called with', opts);
   var api = this;
   var instanceId;
-  /**
-   * @type {Record<string, SKReactNativeLevel>}
-   */
   var stores = {};
   var revLimit = opts.revs_limit;
   /** @type {SKReactNativeLevel} */
   var db;
   var name = opts.name;
-  console.log('got name', name);
+  const databaseName = opts.name;
   // TODO: this is undocumented and unused probably
   /* istanbul ignore else */
   if (typeof opts.createIfMissing === 'undefined') {
     opts.createIfMissing = true;
   }
+  var leveldown = opts.db;
 
-  // var leveldown = opts.db;
-
-  /**
-   * @type {Map<string, SKReactNativeLevel>}
-   */
   var dbStore;
-  // var leveldownName = functionName(leveldown);
-  // if (dbStores.has(leveldownName)) {
-  //   dbStore = dbStores.get(leveldownName);
-  // } else {
-  //   dbStore = new Map();
-  //   dbStores.set(leveldownName, dbStore);
-  // }
-  dbStore = new Map();
-  // dbStores.set(leveldownName, dbStore);
-
+  var leveldownName = databaseName;
+  if (dbStores.has(leveldownName)) {
+    dbStore = dbStores.get(leveldownName);
+  } else {
+    dbStore = new Map();
+    dbStores.set(leveldownName, dbStore);
+  }
   if (dbStore.has(name)) {
     db = dbStore.get(name);
     afterDBCreated();
   } else {
-    const newVal = new SKReactNativeLevel(name, opts);
-    newVal.db = newVal; // Shim since it seems sublevel-pouch expects a db.db as in leveldown in the levelup
-    const subleveledDb = sublevel(newVal);
-    dbStore.set(name, subleveledDb);
-    db = subleveledDb;
-    subleveledDb._docCount = -1;
-    const aQueue = new Deque();
-    subleveledDb._queue = aQueue;
-    newVal._queue = aQueue;
-    if (typeof opts.migrate === 'object') { // migration for leveldown
-      opts.migrate.doMigrationOne(name, db, afterDBCreated);
-    } else {
-      console.log('afterDBCreated calling');
-      afterDBCreated();
-    }
-    /* istanbul ignore else */
-    // if (typeof opts.migrate === 'object') { // migration for leveldown
-    //   opts.migrate.doMigrationOne(name, db, afterDBCreated);
-    // } else {
-    //   afterDBCreated();
-    // }
-
-
-    // dbStore.set(name, sublevel(levelup(leveldown(name), opts, function (err) {
-    //   /* istanbul ignore if */
-    //   if (err) {
-    //     dbStore.delete(name);
-    //     return callback(err);
-    //   }
-    //   db = dbStore.get(name);
-    //   db._docCount = -1;
-    //   db._queue = new Deque();
-    //   /* istanbul ignore else */
-    //   if (typeof opts.migrate === 'object') { // migration for leveldown
-    //     opts.migrate.doMigrationOne(name, db, afterDBCreated);
-    //   } else {
-    //     afterDBCreated();
-    //   }
-    // })));
+    const newDb = new SKReactNativeLevel(name);
+    dbStore.set(name, newDb);
+    newDb.open().then(() => {
+      db = dbStore.get(name);
+      db._docCount = -1;
+      db._queue = new Deque();
+      /* istanbul ignore else */
+      if (typeof opts.migrate === 'object') { // migration for leveldown
+        opts.migrate.doMigrationOne(name, db, afterDBCreated);
+      } else {
+        afterDBCreated();
+      }
+    }).catch((err) => {
+      dbStore.delete(name);
+      return callback(err);
+    });
   }
 
   function afterDBCreated() {
-    console.log('making stores')
     stores.docStore = db.sublevel(DOC_STORE, { valueEncoding: safeJsonEncoding });
-    console.log('made docstore')
     stores.bySeqStore = db.sublevel(BY_SEQ_STORE, { valueEncoding: 'json' });
-    console.log('made bySeqStore')
     stores.attachmentStore =
       db.sublevel(ATTACHMENT_STORE, { valueEncoding: 'json' });
-    console.log('made attachmentStore')
-    stores.binaryStore = db.sublevel(BINARY_STORE, { valueEncoding: 'buffer' });
-    console.log('made binaryStore')
+    stores.binaryStore = db.sublevel(BINARY_STORE, { valueEncoding: 'binary' });
     stores.localStore = db.sublevel(LOCAL_STORE, { valueEncoding: 'json' });
-    console.log('made localStore')
     stores.metaStore = db.sublevel(META_STORE, { valueEncoding: 'json' });
     /* istanbul ignore else */
     if (typeof opts.migrate === 'object') { // migration for leveldown
@@ -294,7 +250,7 @@ function LevelPouch(opts, callback) {
     var res = {
       doc_count: db._docCount,
       update_seq: db._updateSeq,
-      backend_adapter: functionName(leveldown)
+      backend_adapter: databaseName
     };
     return nextTick(function () {
       callback(null, res);
@@ -336,7 +292,7 @@ function LevelPouch(opts, callback) {
     readTasks.forEach(function (readTask) {
       var args = readTask.args;
       var callback = args[args.length - 1];
-      args[args.length - 1] = getArguments(function (cbArgs) {
+      args[args.length - 1] = function (...cbArgs) {
         callback.apply(null, cbArgs);
         if (++numDone === readTasks.length) {
           nextTick(function () {
@@ -349,7 +305,7 @@ function LevelPouch(opts, callback) {
             }
           });
         }
-      });
+      };
       tryCode(readTask.fun, args);
     });
   }
@@ -357,7 +313,7 @@ function LevelPouch(opts, callback) {
   function runWriteOperation(firstTask) {
     var args = firstTask.args;
     var callback = args[args.length - 1];
-    args[args.length - 1] = getArguments(function (cbArgs) {
+    args[args.length - 1] = function (...cbArgs) {
       callback.apply(null, cbArgs);
       nextTick(function () {
         db._queue.shift();
@@ -365,7 +321,7 @@ function LevelPouch(opts, callback) {
           executeNext();
         }
       });
-    });
+    };
     tryCode(firstTask.fun, args);
   }
 
@@ -374,32 +330,32 @@ function LevelPouch(opts, callback) {
   // as e.g. compaction needing to have a lock on the database while
   // it updates stuff. in the future we can revisit this.
   function writeLock(fun) {
-    return getArguments(function (args) {
+    return function (...args) {
       db._queue.push({
-        fun: fun,
-        args: args,
+        fun,
+        args,
         type: 'write'
       });
 
       if (db._queue.length === 1) {
         nextTick(executeNext);
       }
-    });
+    };
   }
 
   // same as the writelock, but multiple can run at once
   function readLock(fun) {
-    return getArguments(function (args) {
+    return function (...args) {
       db._queue.push({
-        fun: fun,
-        args: args,
+        fun,
+        args,
         type: 'read'
       });
 
       if (db._queue.length === 1) {
         nextTick(executeNext);
       }
-    });
+    };
   }
 
   function formatSeq(n) {
@@ -452,7 +408,7 @@ function LevelPouch(opts, callback) {
           // we didn't always store this
           doc._rev = rev;
         }
-        return callback(null, { doc: doc, metadata: metadata });
+        return callback(null, { doc, metadata });
       });
     });
   });
@@ -829,7 +785,7 @@ function LevelPouch(opts, callback) {
           type: 'put',
           prefix: stores.binaryStore,
           key: digest,
-          value: bufferFrom(data, 'binary')
+          value: Buffer.from(data, 'binary')
         }]);
         callback();
       });
@@ -939,9 +895,7 @@ function LevelPouch(opts, callback) {
           return callback(null, returnVal);
         }
         var results = [];
-
-        // var docstream = stores.docStore.readStream(readstreamOpts);
-        const docstream = new EntryStream(stores.docStore, readstreamOpts);
+        var docstream = stores.docStore.readStream(readstreamOpts);
 
         var throughStream = through(function (entry, _, next) {
           var metadata = entry.value;
@@ -1085,15 +1039,14 @@ function LevelPouch(opts, callback) {
       if (!opts.continuous && !opts.cancelled) {
         if (opts.include_docs && opts.attachments && opts.return_docs) {
           fetchAttachments(results, stores, opts).then(function () {
-            opts.complete(null, { results: results, last_seq: lastSeq });
+            opts.complete(null, { results, last_seq: lastSeq });
           });
         } else {
-          opts.complete(null, { results: results, last_seq: lastSeq });
+          opts.complete(null, { results, last_seq: lastSeq });
         }
       }
     }
-    // var changeStream = stores.bySeqStore.readStream(streamOpts);
-    const changeStream = new EntryStream(stores.bySeqStore, streamOpts);
+    var changeStream = stores.bySeqStore.readStream(streamOpts);
     var throughStream = through(function (data, _, next) {
       if (limit && called >= limit) {
         complete();
@@ -1221,9 +1174,10 @@ function LevelPouch(opts, callback) {
       } else {
         dbStore.delete(name);
 
-        var adapterName = functionName(leveldown);
+        var adapterName = databaseName;
         var adapterStore = dbStores.get(adapterName);
-        var keys = [...adapterStore.keys()].filter(k => k.includes("-mrview-"));
+        var viewNamePrefix = PouchDB.prefix + name + "-mrview-";
+        var keys = [...adapterStore.keys()].filter(k => k.includes(viewNamePrefix));
         keys.forEach(key => {
           var eventEmitter = adapterStore.get(key);
           eventEmitter.removeAllListeners();
@@ -1527,7 +1481,7 @@ function LevelPouch(opts, callback) {
   // close and delete open leveldb stores
   api._destroy = function (opts, callback) {
     var dbStore;
-    var leveldownName = functionName(leveldown);
+    var leveldownName = databaseName;
     /* istanbul ignore else */
     if (dbStores.has(leveldownName)) {
       dbStore = dbStores.get(leveldownName);
@@ -1558,4 +1512,4 @@ function LevelPouch(opts, callback) {
   }
 }
 
-module.exports = LevelPouch;
+export default LevelPouch;
