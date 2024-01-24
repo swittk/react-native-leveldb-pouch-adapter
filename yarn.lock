@@ -1625,11 +1625,6 @@
   resolved "https://registry.npmjs.org/@sindresorhus/is/-/is-0.14.0.tgz"
   integrity sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==
 
-"@switt/react-native-leveldb@3.0.6-alpha1":
-  version "3.0.6-alpha1"
-  resolved "https://registry.npmjs.org/@switt/react-native-leveldb/-/react-native-leveldb-3.0.6-alpha1.tgz"
-  integrity sha512-vgq3MtIXclXQe9X3VALqDmprlpoocwOw4R+R+4l7DXfi5dXux6yLtpsSdGzopWnqA52yWR+rQnZNC1MX/oDJDw==
-
 "@szmarczak/http-timer@^1.1.2":
   version "1.1.2"
   resolved "https://registry.npmjs.org/@szmarczak/http-timer/-/http-timer-1.1.2.tgz"
@@ -7316,15 +7311,28 @@ react-native-gradle-plugin@^0.0.6:
   resolved "https://registry.npmjs.org/react-native-gradle-plugin/-/react-native-gradle-plugin-0.0.6.tgz"
   integrity sha512-eIlgtsmDp1jLC24dRn43hB3kEcZVqx6DUQbR0N1ABXGnMEafm9I3V3dUUeD1vh+Dy5WqijSoEwLNUPLgu5zDMg==
 
-react-native-leveldb-level-adapter@^0.1.0-alpha4:
-  version "0.1.0-alpha4"
-  resolved "https://registry.npmjs.org/react-native-leveldb-level-adapter/-/react-native-leveldb-level-adapter-0.1.0-alpha4.tgz"
-  integrity sha512-/KYDtq9ZGxonsKy9RSwEJaAzCoH/zamfKFwDify9yapwtMNk+uh0caJys1+lX8LagksV6kzSTfTTPOVOjBxzGw==
+react-native-leveldb-level-adapter@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.npmjs.org/react-native-leveldb-level-adapter/-/react-native-leveldb-level-adapter-0.2.1.tgz"
+  integrity sha512-cQKWtHiD0JUvHoiDfUvLJ2lnm5tx14kY2xDLWb6UEpqsaiig84FEASIIwSQI0m6KzV5UW3XLr45eQc23TmUO7g==
   dependencies:
-    "@switt/react-native-leveldb" "3.0.6-alpha1"
     abstract-level "^1.0.3"
     events "^3.3.0"
     react-native-fs "^2.20.0"
+    react-native-leveldb "^3.3.1"
+    to-arraybuffer "^1.0.1"
+
+react-native-leveldb@^3.3.1:
+  version "3.3.5"
+  resolved "https://registry.npmjs.org/react-native-leveldb/-/react-native-leveldb-3.3.5.tgz"
+  integrity sha512-jog5bm4mZP/348oGX0OTezL+6wryU+SZvC70pxm2CZTnxeCaI/e+ql6fWKOT8uP53XhWUi9pBy8tHHwoOuHOxQ==
+
+react-native-quick-base64@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.npmjs.org/react-native-quick-base64/-/react-native-quick-base64-2.0.8.tgz"
+  integrity sha512-2kMlnLSy0qz4NA0KXMGugd3qNB5EAizxZ6ghEVNGIxAOlc9CGvC8miv35wgpFbSKeiaBRfcPfkdTM/5Erb/6SQ==
+  dependencies:
+    base64-js "^1.5.1"
 
 react-native@*, react-native@0.68.2:
   version "0.68.2"
@@ -8478,6 +8486,11 @@ tmpl@1.0.5:
   version "1.0.5"
   resolved "https://registry.npmjs.org/tmpl/-/tmpl-1.0.5.tgz"
   integrity sha512-3f0uOEAQwIqGuWW2MVzYg8fV/QNnc/IpuJNG837rLuczAaLVHslWHZQj4IGiEl5Hs3kkbhwL9Ab7Hrsmuj+Smw==
+
+to-arraybuffer@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/to-arraybuffer/-/to-arraybuffer-1.0.1.tgz"
+  integrity sha512-okFlQcoGTi4LQBG/PgSYblw9VOyptsz2KJZqc6qtgGdes8VktzUQkj4BI2blit072iS8VODNcMA+tvnS9dnuMA==
 
 to-fast-properties@^2.0.0:
   version "2.0.0"

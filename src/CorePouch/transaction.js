@@ -34,7 +34,6 @@ var precodec = {
  * @returns 
  */
 function getCacheFor(transaction, store) {
-  console.log('getCacheforStore', store.prefix)
   // Originally was
   // var prefix = store.prefix()[0];
   // This is likely fucked up too; find appropriate way to do it.
@@ -58,7 +57,6 @@ class LevelTransaction {
   get(store, key, callback) {
     var cache = getCacheFor(this, store);
     var exists = cache.get(key);
-    console.log('cache and exists', cache, exists)
     if (exists) {
       return nextTick(function () {
         callback(null, exists);

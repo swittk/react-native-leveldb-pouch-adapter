@@ -37,6 +37,8 @@ import {
   binaryStringToBlobOrBuffer as binStringToBluffer
 } from 'pouchdb-binary-utils';
 
+import { atob as fastAtoB } from 'react-native-quick-base64';
+
 import readAsBluffer from './readAsBlobOrBuffer';
 import prepareAttachmentForStorage from './prepareAttachmentForStorage';
 import createEmptyBluffer from './createEmptyBlobOrBuffer';
@@ -660,7 +662,6 @@ function LevelPouch(opts, callback) {
       for (var i = 0; i < attachments.length; i++) {
         var key = attachments[i];
         var att = docInfo.data._attachments[key];
-
         if (att.stub) {
           // still need to update the refs mapping
           var id = docInfo.data._id;
@@ -672,7 +673,9 @@ function LevelPouch(opts, callback) {
         if (typeof att.data === 'string') {
           // input is assumed to be a base64 string
           try {
-            data = atob(att.data);
+            // guarantee we'll use faster implementation?
+            // TODO: Once RN 0.74 comes out with Hermes native atob remove this.
+            data = fastAtoB(att.data);
           } catch (e) {
             callback(createError(BAD_ARG,
               'Attachment is not a valid base64 string'));

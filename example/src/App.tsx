@@ -25,8 +25,6 @@ export default function App() {
     const pouchdb = new Pouch('myDb');
     return pouchdb;
   }, []);
-  console.log('db is', db);
-  console.log('pouchdb is', pouchdb);
   const [result, setResult] = React.useState<number | undefined>();
 
   // React.useEffect(() => {
@@ -57,8 +55,31 @@ export default function App() {
       console.log('test put pouch');
       const randId = Math.random().toString();
       await pouchdb.post({
-        hello: Math.random(),
+        hello: 0.5,
         world: 3
+      })
+      await pouchdb.post({
+        hello: 1,
+        world: 4
+      })
+      await pouchdb.post({
+        hello: 2,
+        world: 5
+      })
+      await pouchdb.post({
+        hello: 1,
+        world: 3
+      })
+      console.log('try post data')
+      const saveRes = await pouchdb.post({
+        hello: 1,
+        world: 3,
+        _attachments: {
+          'stuff': {
+            content_type: 'application/json',
+            data: 'aGVsbG93b3JsZA=='
+          }
+        }
       })
       console.log('did post; rechecking')
       const allDocs = await pouchdb.find({
@@ -70,7 +91,7 @@ export default function App() {
         },
       });
       console.log('allPouchDocs are', allDocs);
-      console.log('shit it', await pouchdb.get('shit'));
+      console.log('noob data is', await pouchdb.get(saveRes.id));
     })();
 
   }, []);
