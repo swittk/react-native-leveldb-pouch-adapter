@@ -12,16 +12,8 @@ import { SKReactNativeLevel } from 'react-native-leveldb-level-adapter';
 export default function App() {
   console.log('initme');
 
-  const ldown = new SKReactNativeLevel('db0.db');
-  console.log('ldown is', ldown);
-  const db = React.useMemo(() => {
-    return new SKReactNativeLevel('db0.db');
-    // return new Pouch('db0.db', {
-    //   adapter: 'rnleveldb',
-    //   // db: new SKReactNativeLevel('db0.db')
-    // } as any);
-  }, []);
   const pouchdb = React.useMemo(() => {
+    console.log('constructing pouchdb')
     const pouchdb = new Pouch('myDb');
     return pouchdb;
   }, []);
@@ -39,17 +31,6 @@ export default function App() {
   // }, []);
 
   React.useEffect(() => {
-    (async () => {
-      console.log('test put');
-      await db.put('สวัสดี', 'ชาวโลก');
-      const gotRes = await db.get('สวัสดี');
-      console.log('got สวัสดี', gotRes);
-      // const putRes = await db.get('doc2');
-      // console.log('got putres', putRes);
-
-    })();
-    // multiply(3, 7).then(setResult);
-
     (async () => {
       console.log('test put pouch');
       const randId = Math.random().toString();
@@ -81,6 +62,7 @@ export default function App() {
         }
       })
       console.log('did post; rechecking')
+      console.log('adapter is', (await pouchdb.info()).backend_adapter);
       const allDocs = await pouchdb.find({
         selector: {
           hello: { $lt: 1 }
@@ -88,9 +70,13 @@ export default function App() {
           // role: { $elemMatch: { $eq: role } },
         },
       });
-      pouchdb.createIndex({ index: { fields: ['hello'] } })
+      // pouchdb.createIndex({ index: { fields: ['hello'] } })
       console.log('allPouchDocs less than 1 are', allDocs);
       console.log('noob data is', await pouchdb.get(saveRes.id));
+      const info = await pouchdb.info();
+      console.log('pouch info is', info.backend_adapter, info.doc_count, info.db_name);
+      await pouchdb.destroy();
+      console.log('destroyed')
     })();
 
   }, []);

@@ -56,6 +56,7 @@ import {
 } from 'pouchdb-errors';
 
 import { EntryStream } from 'level-read-stream'
+import { LevelDB } from 'react-native-leveldb';
 
 if (!(global).process) {
   (global).process = {};
@@ -84,6 +85,9 @@ var META_STORE = 'meta-store';
 
 // leveldb barks if we try to open a db multiple times
 // so we cache opened connections here for initstore()
+/**
+ * @type {Map<string, Map<string, import('abstract-level').AbstractLevel>>}
+ */
 var dbStores = new Map();
 
 // store the value of update_seq in the by-sequence store the key name will
@@ -177,7 +181,9 @@ function LevelPouch(opts, callback) {
   /** @type {SKReactNativeLevel} */
   var db;
   var name = opts.name;
-  const databaseName = opts.name;
+
+  // TODO: Change all databaseName to backendName ...and it's not supposed to be obtained from `opts.name`, definitely.
+  const backendName = opts.db?.name || 'rnleveldb';
   // TODO: this is undocumented and unused probably
   /* istanbul ignore else */
   if (typeof opts.createIfMissing === 'undefined') {
@@ -185,8 +191,12 @@ function LevelPouch(opts, callback) {
   }
   var leveldown = opts.db;
 
+  /** 
+   * @type {Map<string, import('abstract-level').AbstractLevel>} 
+   * The database container for databases of the specified backendName
+   * */
   var dbStore;
-  var leveldownName = databaseName;
+  var leveldownName = backendName;
   if (dbStores.has(leveldownName)) {
     dbStore = dbStores.get(leveldownName);
   } else {
@@ -272,7 +282,7 @@ function LevelPouch(opts, callback) {
     var res = {
       doc_count: db._docCount,
       update_seq: db._updateSeq,
-      backend_adapter: databaseName
+      backend_adapter: backendName
     };
     return nextTick(function () {
       callback(null, res);
@@ -1204,7 +1214,7 @@ function LevelPouch(opts, callback) {
       } else {
         dbStore.delete(name);
 
-        var adapterName = databaseName;
+        var adapterName = backendName;
         var adapterStore = dbStores.get(adapterName);
         var viewNamePrefix = PouchDB.prefix + name + "-mrview-";
         var keys = [...adapterStore.keys()].filter(k => k.includes(viewNamePrefix));
@@ -1510,8 +1520,9 @@ function LevelPouch(opts, callback) {
 
   // close and delete open leveldb stores
   api._destroy = function (opts, callback) {
+    /** @type {Map<string, import('abstract-level').AbstractLevel>} the mapper of the DB of the specified name */
     var dbStore;
-    var leveldownName = databaseName;
+    var leveldownName = backendName;
     /* istanbul ignore else */
     if (dbStores.has(leveldownName)) {
       dbStore = dbStores.get(leveldownName);
@@ -1534,6 +1545,10 @@ function LevelPouch(opts, callback) {
   function callDestroy(name, cb) {
     // May not exist if leveldown is backed by memory adapter
     /* istanbul ignore else */
+    // TODO: Move this ugly thing over to a method called `destroy` in the DB itself, similar to LevelDown's version.
+    LevelDB.destroyDB(name, true);
+    cb(null);
+    return;
     if ('destroy' in leveldown) {
       leveldown.destroy(name, cb);
     } else {

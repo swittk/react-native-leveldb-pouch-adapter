@@ -1,6 +1,6 @@
 {
   "name": "pouchdb-adapter-react-native-level",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": ".",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -34,7 +34,7 @@
     "ios",
     "android"
   ],
-  "repository": "https://home.com",
+  "repository": "https://github.com/swittk/react-native-leveldb-pouch-adapter",
   "author": "Switt Kongdachalert <nope@nopy.com> (https://swittssoftware.com)",
   "license": "MIT",
   "bugs": {

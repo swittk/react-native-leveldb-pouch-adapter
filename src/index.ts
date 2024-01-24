@@ -5,7 +5,6 @@ const CorePouch = require('./CorePouch').default;
 // }
 
 function LevelPouchRN(opts: any, callback: (error: any) => void) {
-  console.log('I have opts', opts);
   // Users can pass in their own leveldown alternative here, in which case
   // it overrides the default one. (This is in addition to the custom builds.)
   var leveldown = opts.db;
