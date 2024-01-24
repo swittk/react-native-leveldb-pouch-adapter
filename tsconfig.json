@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "pouchdb-adapter-react-native-leveldb": ["./src/index"]
+      "pouchdb-adapter-react-native-level": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

@@ -1036,15 +1036,19 @@ function LevelPouch(opts, callback) {
     var results = [];
     var lastSeq = opts.since || 0;
     var called = 0;
+    /** @type {ConstructorParameters<typeof EntryStream>[1]} */
     var streamOpts = {
-      reverse: descending
+      reverse: descending,
     };
     var limit;
     if ('limit' in opts && opts.limit > 0) {
       limit = opts.limit;
     }
     if (!streamOpts.reverse) {
-      streamOpts.start = formatSeq(opts.since || 0);
+      // https://github.com/Level/abstract-leveldown/blob/master/UPGRADING.md
+      // Legacy range option `start`, and `end` have been removed as of 7.0.0;
+      // replace with `gte` and `lte`
+      streamOpts.gte = formatSeq(opts.since || 0);
     }
 
     var docIds = opts.doc_ids && new Set(opts.doc_ids);

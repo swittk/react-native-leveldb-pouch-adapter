@@ -2,7 +2,7 @@ import './_App_prestart';
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
-// import { multiply } from 'pouchdb-adapter-react-native-leveldb';
+// import { multiply } from 'pouchdb-adapter-react-native-level';
 import Pouch from './Pouch';
 // const rnld = require('react-native-leveldb-leveldown-adapter');
 // console.log('rnld is', rnld);
@@ -41,10 +41,9 @@ export default function App() {
   React.useEffect(() => {
     (async () => {
       console.log('test put');
-      await db.put('กาก', 'กากจุง\u0000มุงมุง');
-      console.log('did put hi\u0000world');
-      const gotRes = await db.get('กาก');
-      console.log('got res', gotRes);
+      await db.put('สวัสดี', 'ชาวโลก');
+      const gotRes = await db.get('สวัสดี');
+      console.log('got สวัสดี', gotRes);
       // const putRes = await db.get('doc2');
       // console.log('got putres', putRes);
 
@@ -84,13 +83,13 @@ export default function App() {
       console.log('did post; rechecking')
       const allDocs = await pouchdb.find({
         selector: {
-          // hello: { $lt: 1 }
+          hello: { $lt: 1 }
           // hello: { $gt: 1 }
-          // _id: 'shit'
           // role: { $elemMatch: { $eq: role } },
         },
       });
-      console.log('allPouchDocs are', allDocs);
+      pouchdb.createIndex({ index: { fields: ['hello'] } })
+      console.log('allPouchDocs less than 1 are', allDocs);
       console.log('noob data is', await pouchdb.get(saveRes.id));
     })();
 

@@ -1,6 +1,6 @@
 {
-  "name": "pouchdb-adapter-react-native-leveldb-example",
-  "description": "Example app for pouchdb-adapter-react-native-leveldb",
+  "name": "pouchdb-adapter-react-native-level-example",
+  "description": "Example app for pouchdb-adapter-react-native-level",
   "version": "0.0.1",
   "private": true,
   "scripts": {
